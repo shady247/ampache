@@ -52,10 +52,10 @@ class Bookmark extends database_object
             return false;
         }
         
-        if (!$object_type) {
+        if ($object_type === null) {
             $info = $this->get_info($object_id);
         } else {
-            if ($user_id == null) {
+            if ($user_id === null) {
                 $user_id = Core::get_global('user')->id;
             }
 
@@ -91,7 +91,7 @@ class Bookmark extends database_object
                 $sql = "DELETE FROM `bookmark` WHERE `object_type` = ? AND `object_id` = ?";
                 Dba::write($sql, array($object_type, $object_id));
             } else {
-                debug_event('bookmark', 'Garbage collect on type `' . $object_type . '` is not supported.', 1);
+                debug_event('bookmark.class', 'Garbage collect on type `' . $object_type . '` is not supported.', 3);
             }
         } else {
             foreach ($types as $type) {

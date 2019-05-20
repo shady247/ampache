@@ -122,8 +122,8 @@ abstract class OAuthSignatureMethod
 
         // Avoid a timing leak with a (hopefully) time insensitive compare
         $result = 0;
-        for ($i = 0; $i < strlen($signature); $i++) {
-            $result |= ord($built{$i}) ^ ord($signature{$i});
+        for ($count = 0; $count < strlen($signature); $count++) {
+            $result |= ord($built{$count}) ^ ord($signature{$count});
         }
 
         return $result == 0;
@@ -238,7 +238,7 @@ abstract class OAuthSignatureMethod_RSA_SHA1 extends OAuthSignatureMethod
         $privatekeyid = openssl_get_privatekey($cert);
 
         // Sign using the key
-        $ok = openssl_sign($base_string, $signature, $privatekeyid);
+        $okay = openssl_sign($base_string, $signature, $privatekeyid);
 
         // Release the key resource
         openssl_free_key($privatekeyid);
@@ -259,12 +259,12 @@ abstract class OAuthSignatureMethod_RSA_SHA1 extends OAuthSignatureMethod
         $publickeyid = openssl_get_publickey($cert);
 
         // Check the computed signature against the one passed in the query
-        $ok = openssl_verify($base_string, $decoded_sig, $publickeyid);
+        $okay = openssl_verify($base_string, $decoded_sig, $publickeyid);
 
         // Release the key resource
         openssl_free_key($publickeyid);
 
-        return $ok == 1;
+        return $okay == 1;
     }
 }
 
@@ -293,7 +293,7 @@ class OAuthRequest
      */
     public static function from_request($http_method=null, $http_url=null, $parameters=null)
     {
-        $scheme = (!filter_has_var(INPUT_SERVER, 'HTTPS') || filter_input(INPUT_SERVER, 'HTTPS', FILTER_SANITIZE_STRING) != "on")
+        $scheme = (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != "on")
               ? 'http'
               : 'https';
         $http_url = ($http_url) ? $http_url : $scheme .
@@ -897,7 +897,7 @@ class OAuthUtil
             // otherwise we don't have apache and are just going to have to hope
             // that $_SERVER actually contains what we need
             $out = array();
-            if (filter_has_var(INPUT_SERVER, 'CONTENT_TYPE')) {
+            if (isset($_SERVER['CONTENT_TYPE'])) {
                 $out['Content-Type'] = $_SERVER['CONTENT_TYPE'];
             }
             if (isset($_ENV['CONTENT_TYPE'])) {

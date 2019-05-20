@@ -24,10 +24,8 @@ require_once 'lib/init.php';
 
 UI::show_header();
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'delete':
         if (AmpConfig::get('demo_mode')) {
             break;
@@ -49,7 +47,7 @@ switch ($action) {
 
         $label = new Label($_REQUEST['label_id']);
         if (!Catalog::can_remove($label)) {
-            debug_event('label', 'Unauthorized to remove the label `.' . $label->id . '`.', 1);
+            debug_event('labels', 'Unauthorized to remove the label `.' . $label->id . '`.', 1);
             UI::access_denied();
 
             return false;

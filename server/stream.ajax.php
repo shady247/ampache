@@ -28,13 +28,12 @@ if (!defined('AJAX_INCLUDE')) {
     return false;
 }
 
-debug_event('stream.ajax.php', 'Called for action {' . (string) filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS) . '}', 5);
+debug_event('stream.ajax', 'Called for action {' . Core::get_request('action') . '}', 5);
 
 $results = array();
-$action  = UI::get_action();
 
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'set_play_type':
         // Make sure they have the rights to do this
         if (!Preference::has_access('play_type')) {
@@ -78,12 +77,12 @@ switch ($action) {
     break;
     case 'directplay':
 
-        debug_event('stream.ajax.php', 'Play type {' . $_REQUEST['playtype'] . '}', 5);
-        $object_type = $_REQUEST['object_type'];
-        $object_id   = filter_input(INPUT_GET, 'object_id', FILTER_SANITIZE_NUMBER_INT);
+        $object_type = Core::get_request('object_type');
+        $object_id   = $_GET['object_id'];
         if (is_array($object_id)) {
             $object_id = implode(',', $object_id);
         }
+        debug_event('stream.ajax', 'Called for ' . $object_type . ': {' . $object_id . '}', 5);
 
         if (Core::is_playable_item($object_type)) {
             $_SESSION['iframe']['target'] = AmpConfig::get('web_path') . '/stream.php?action=play_item&object_type=' . $object_type . '&object_id=' . $object_id;

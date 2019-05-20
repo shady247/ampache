@@ -806,7 +806,7 @@ class Query
     public function set_catalog($catalog_number)
     {
         $this->catalog = $catalog_number;
-        debug_event("Catalog", "set catalog id: " . $this->catalog, "5");
+        debug_event('query.class', "set catalog id: " . $this->catalog, "5");
     }
 
     /**
@@ -905,7 +905,7 @@ class Query
     } // is_simple
 
     /**
-     * get_savedget_saved
+     * get_saved
      * This looks in the session for the saved stuff and returns what it
      * finds.
      * @return array
@@ -1093,6 +1093,7 @@ class Query
                     $sql = "SELECT %%SELECT%% FROM `podcast_episode` ";
                 break;
                 case 'playlist_media':
+                    $sql = '';
                 break;
                 case 'song':
                 default:

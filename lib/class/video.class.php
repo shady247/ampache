@@ -188,7 +188,7 @@ class Video extends database_object implements media, library_item
      */
     public function __construct($id = null)
     {
-        if (!$id) {
+        if ($id === null) {
             return false;
         }
         
@@ -340,6 +340,8 @@ class Video extends database_object implements media, library_item
      */
     public function search_childrens($name)
     {
+        debug_event('video.class', 'search_childrens ' . $name, 5);
+
         return array();
     }
 
@@ -351,7 +353,7 @@ class Video extends database_object implements media, library_item
     public function get_medias($filter_type = null)
     {
         $medias = array();
-        if (!$filter_type || $filter_type == 'video') {
+        if ($filter_type === null || $filter_type == 'video') {
             $medias[] = array(
                 'object_type' => 'video',
                 'object_id' => $this->id
@@ -1028,7 +1030,7 @@ class Video extends database_object implements media, library_item
                 Useractivity::garbage_collection('video', $this->id);
             }
         } else {
-            debug_event('video', 'Cannot delete ' . $this->file . 'file. Please check permissions.', 1);
+            debug_event('video.class', 'Cannot delete ' . $this->file . 'file. Please check permissions.', 1);
         }
 
         return $deleted;

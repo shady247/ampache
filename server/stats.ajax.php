@@ -28,10 +28,10 @@ if (!defined('AJAX_INCLUDE')) {
 }
 
 $results = array();
-$action  = UI::get_action();
+$action  = Core::get_request('action');
 
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'geolocation':
         if (AmpConfig::get('geolocation')) {
             if (Core::get_global('user')->id) {
@@ -61,7 +61,7 @@ switch ($action) {
                 }
             }
         } else {
-            debug_event('stats.ajax.php', 'Geolocation not enabled for the user.', 3);
+            debug_event('stats.ajax', 'Geolocation not enabled for the user.', 3);
         }
         break;
     default:

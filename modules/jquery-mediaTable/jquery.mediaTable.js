@@ -213,7 +213,7 @@ http://www.consulenza-web.com/2012/01/mediatable-jquery-plugin/
           cols.show();
         } else {
           cols.hide();
-        };
+        }
     };
 
       var updateCheck = function() {
@@ -245,7 +245,9 @@ http://www.consulenza-web.com/2012/01/mediatable-jquery-plugin/
     // Get the widget context.
     var _this = this;
     var wdg = $(this).data( "MediaTable" );
-    if ( !wdg ) return;
+    if ( !wdg ) {
+        return;
+    }
     
     // Menu initialization logic.
     if ( wdg.cfg.menu ) {
@@ -269,7 +271,9 @@ http://www.consulenza-web.com/2012/01/mediatable-jquery-plugin/
   var __reset = function() {
     // Get the widget context.
     var wdg = $(this).data( "MediaTable" );
-    if ( !wdg ) return;
+    if ( !wdg ) {
+        return;
+    }
     
     wdg.$table.find("thead th").each(function(i){
         var $th = $("#" + wdg.id + "-mediaTableCol-" + i);
@@ -384,5 +388,5 @@ http://www.consulenza-web.com/2012/01/mediatable-jquery-plugin/
   }; // EndOf: "$.fn.mediaTable()" ###
 
 
-})( jQuery );
+}( jQuery ));
 

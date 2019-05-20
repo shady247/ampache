@@ -159,7 +159,7 @@ class Label extends database_object implements library_item
     public function get_medias($filter_type = null)
     {
         $medias = array();
-        if (!$filter_type || $filter_type == 'song') {
+        if ($filter_type === null || $filter_type == 'song') {
             $songs = $this->get_songs();
             foreach ($songs as $song_id) {
                 $medias[] = array(
@@ -184,6 +184,7 @@ class Label extends database_object implements library_item
 
     public function search_childrens($name)
     {
+        $search                    = array();
         $search['type']            = "artist";
         $search['rule_0_input']    = $name;
         $search['rule_0_operator'] = 4;
@@ -348,8 +349,8 @@ class Label extends database_object implements library_item
         $db_results = Dba::read($sql, array($this->name));
 
         $results = array();
-        while ($r = Dba::fetch_assoc($db_results)) {
-            $results[] = $r['id'];
+        while ($row = Dba::fetch_assoc($db_results)) {
+            $results[] = $row['id'];
         }
 
         return $results;
@@ -436,7 +437,7 @@ class Label extends database_object implements library_item
      */
     public static function update_label_list($labels_comma, $artist_id, $overwrite)
     {
-        debug_event('label.class', 'Updating labels for values {' . $labels_comma . '} artist {' . $artist_id . '}', '5');
+        debug_event('label.class', 'Updating labels for values {' . $labels_comma . '} artist {' . $artist_id . '}', 5);
 
         $clabels      = Label::get_labels($artist_id);
         $editedLabels = explode(",", $labels_comma);
@@ -445,7 +446,7 @@ class Label extends database_object implements library_item
             foreach ($clabels as $clid => $clv) {
                 if ($clid) {
                     $clabel = new Label($clid);
-                    debug_event('label.class', 'Processing label {' . $clabel->name . '}...', '5');
+                    debug_event('label.class', 'Processing label {' . $clabel->name . '}...', 5);
                     $found = false;
 
                     foreach ($editedLabels as  $lk => $lv) {
@@ -456,11 +457,11 @@ class Label extends database_object implements library_item
                     }
 
                     if ($found) {
-                        debug_event('label.class', 'Already found. Do nothing.', '5');
+                        debug_event('label.class', 'Already found. Do nothing.', 5);
                         unset($editedLabels[$lk]);
                     } else {
                         if ($overwrite) {
-                            debug_event('label.class', 'Not found in the new list. Delete it.', '5');
+                            debug_event('label.class', 'Not found in the new list. Delete it.', 5);
                             $clabel->remove_artist_assoc($artist_id);
                         }
                     }
@@ -471,10 +472,10 @@ class Label extends database_object implements library_item
         // Look if we need to add some new labels
         foreach ($editedLabels as  $lk => $lv) {
             if ($lv != '') {
-                debug_event('label.class', 'Adding new label {' . $lv . '}', '5');
+                debug_event('label.class', 'Adding new label {' . $lv . '}', 5);
                 $label_id = Label::lookup(array('name' => $lv));
                 if ($label_id === 0) {
-                    debug_event('label.class', 'Creating a label directly from artist editing is not allowed.', '5');
+                    debug_event('label.class', 'Creating a label directly from artist editing is not allowed.', 5);
                     //$label_id = Label::create(array('name' => $lv));
                 }
                 if ($label_id > 0) {
@@ -496,13 +497,13 @@ class Label extends database_object implements library_item
     public static function clean_to_existing($labels)
     {
         if (is_array($labels)) {
-            $ar = $labels;
+            $array = $labels;
         } else {
-            $ar = explode(",", $labels);
+            $array = explode(",", $labels);
         }
 
         $ret = array();
-        foreach ($ar as $label) {
+        foreach ($array as $label) {
             $label = trim($label);
             if (!empty($label)) {
                 if (Label::lookup(array('name' => $label)) > 0) {

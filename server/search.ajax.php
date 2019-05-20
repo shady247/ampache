@@ -27,10 +27,8 @@ if (!defined('AJAX_INCLUDE')) {
     return false;
 }
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'search':
         $search = $_REQUEST['search'];
         $target = $_REQUEST['target'];
@@ -189,8 +187,8 @@ switch ($action) {
         }
 
         if ($target == 'missing_artist' && AmpConfig::get('wanted')) {
-            $sres = Wanted::search_missing_artists($search);
-            $i    = 0;
+            $sres     = Wanted::search_missing_artists($search);
+            $count    = 0;
             foreach ($sres as $r) {
                 $results[] = array(
                     'type' => T_('Missing Artists'),
@@ -200,9 +198,9 @@ switch ($action) {
                     'rels' => '',
                     'image' => '',
                 );
-                $i++;
+                $count++;
 
-                if ($i >= $limit) {
+                if ($count >= $limit) {
                     break;
                 }
             }

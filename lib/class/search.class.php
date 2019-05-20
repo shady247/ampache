@@ -929,7 +929,7 @@ class Search extends playlist_object
         if ($this->limit > 0) {
             $sql .= " LIMIT " . (string) ($this->limit);
         }
-        debug_event('search', 'SQL get_items: ' . $sql, 4);
+        debug_event('search.class', 'SQL get_items: ' . $sql, 5);
 
         $db_results = Dba::read($sql);
         while ($row = Dba::fetch_assoc($db_results)) {
@@ -980,7 +980,7 @@ class Search extends playlist_object
 
         $sql .= ' ORDER BY RAND()';
         $sql .= $limit ? ' LIMIT ' . (string) ($limit) : '';
-        debug_event('search', 'SQL get_random_items: ' . $sql, 4);
+        debug_event('search.sql', 'SQL get_random_items: ' . $sql, 5);
 
         $db_results = Dba::read($sql);
 
@@ -1099,7 +1099,7 @@ class Search extends playlist_object
         if ($data && is_array($data)) {
             $this->name   = $data['name'];
             $this->type   = $data['pl_type'];
-            $this->random = is_null($data['random']) ? 0 : 1;
+            $this->random = make_bool(is_null((int) $data['random']) ? 0 : 1);
             $this->limit  = $data['limit'];
         }
 

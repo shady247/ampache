@@ -173,6 +173,11 @@ class Album extends database_object implements library_item
     public $f_year;
 
     /**
+      * @var string f_year_link
+      */
+    public $f_year_link;
+
+    /**
      *  @var string $f_title
      */
     public $f_title;
@@ -219,7 +224,7 @@ class Album extends database_object implements library_item
      */
     public function __construct($album_id = null)
     {
-        if ($album_id === null) {
+        if (!$album_id) {
             return false;
         }
 
@@ -420,14 +425,14 @@ class Album extends database_object implements library_item
      * @param string $album_artist
      * @param string $release_type
      * @param boolean $readonly
-     * @return int|null
+     * @return integer|null
      */
     public static function check($name, $year = 0, $disk = 0, $mbid = null, $mbid_group = null, $album_artist = null, $release_type = null, $readonly = false)
     {
         $trimmed      = Catalog::trim_prefix(trim($name));
         $name         = $trimmed['string'];
         $prefix       = $trimmed['prefix'];
-        $album_artist = (int) ($album_artist);
+        $album_artist = (int) $album_artist;
         $album_artist = ($album_artist <= 0) ? null : $album_artist;
         $mbid         = empty($mbid) ? null : $mbid;
         $mbid_group   = empty($mbid_group) ? null : $mbid_group;
@@ -489,14 +494,13 @@ class Album extends database_object implements library_item
             try {
                 Wanted::delete_wanted_release($mbid);
             } catch (Exception $e) {
-                debug_event('wanted', 'Cannot process wanted releases auto-removal check: ' . $e->getMessage(), '1');
+                debug_event('album.class', 'Cannot process wanted releases auto-removal check: ' . $e->getMessage(), 2);
             }
         }
 
-
         self::$_mapcache[$name][$disk][$mbid][$album_artist] = $album_id;
 
-        return (int) $album_id;
+        return $album_id;
     }
 
     /**
@@ -574,7 +578,7 @@ class Album extends database_object implements library_item
      * get_album_suite
      * gets the album ids with the same musicbrainz identifier
      * @param integer $catalog
-     * return int[]
+     * return integer[]
      */
     public function get_album_suite($catalog = 0)
     {
@@ -638,7 +642,7 @@ class Album extends database_object implements library_item
     /**
      * format
      * This is the format function for this object. It sets cleaned up
-     * album information with the base required
+     * album information with the base required
      * f_link, f_name
      */
     public function format($details = true, $limit_threshold = '')
@@ -691,6 +695,9 @@ class Album extends database_object implements library_item
 
         if (!$this->year) {
             $this->f_year = "N/A";
+        } else {
+            $year              = $this->year;
+            $this->f_year_link = "<a href=\"$web_path/albums.php?action=showyear&year=" . $year . "\">" . $year . "</a>";
         }
 
         $this->f_release_type = ucwords($this->release_type);
@@ -782,7 +789,7 @@ class Album extends database_object implements library_item
     }
 
     /**
-     * Get all childrens and sub-childrens medias.
+     * Get all children and sub-childrens media.
      * @param string $filter_type
      * @return array
      */
@@ -897,13 +904,13 @@ class Album extends database_object implements library_item
      * This function takes a key'd array of data and updates this object
      * as needed
      * @param array $data
-     * @return int
+     * @return integer
      */
     public function update(array $data)
     {
         $year         = isset($data['year']) ? $data['year'] : $this->year;
         $artist       = isset($data['artist']) ? (int) $data['artist'] : $this->artist_id;
-        $album_artist = isset($data['album_artist']) ? (int) ($data['album_artist']) : $this->album_artist;
+        $album_artist = isset($data['album_artist']) ? (int) $data['album_artist'] : $this->album_artist;
         $name         = isset($data['name']) ? $data['name'] : $this->name;
         $disk         = isset($data['disk']) ? $data['disk'] : $this->disk;
         $mbid         = isset($data['mbid']) ? $data['mbid'] : $this->mbid;
@@ -996,7 +1003,7 @@ class Album extends database_object implements library_item
      */
     public function update_tags($tags_comma, $override_childs, $add_to_childs, $current_id = null, $force_update = false)
     {
-        if ($current_id === null) {
+        if ($current_id == null) {
             $current_id = $this->id;
         }
 
@@ -1019,7 +1026,7 @@ class Album extends database_object implements library_item
             $song    = new Song($song_id);
             $deleted = $song->remove_from_disk();
             if (!$deleted) {
-                debug_event('album', 'Error when deleting the song `' . $song_id . '`.', 1);
+                debug_event('album.class', 'Error when deleting the song `' . $song_id . '`.', 1);
                 break;
             }
         }

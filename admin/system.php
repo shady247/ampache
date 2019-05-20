@@ -30,10 +30,8 @@ if (!Access::check('interface', 100) or AmpConfig::get('demo_mode')) {
 
 UI::show_header();
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     /* This re-generates the config file comparing
      * /config/ampache.cfg to .cfg.dist
      */
@@ -57,7 +55,7 @@ switch ($action) {
     break;
     case 'show_debug':
         $configuration = AmpConfig::get_all();
-        if ($_REQUEST['autoupdate'] == 'force') {
+        if (Core::get_request('autoupdate') == 'force') {
             $version = AutoUpdate::get_latest_version(true);
         }
         require_once AmpConfig::get('prefix') . UI::find_template('show_debug.inc.php');

@@ -252,6 +252,12 @@ class Song extends database_object implements media, library_item
      * @var string $f_albumartist_link
      */
     public $f_albumartist_link;
+
+    /**
+     * @var string f_year_link
+     */
+    public $f_year_link;
+
     /**
      * @var string $f_tags
      */
@@ -319,7 +325,8 @@ class Song extends database_object implements media, library_item
             $this->initializeMetadata();
         }
 
-        if ($info = $this->has_info($limit_threshold)) {
+        $info = $this->has_info($limit_threshold);
+        if ($info !== false && is_array($info)) {
             foreach ($info as $key => $value) {
                 $this->$key = $value;
             }
@@ -417,7 +424,7 @@ class Song extends database_object implements media, library_item
             $composer, $channels));
 
         if (!$db_results) {
-            debug_event('song', 'Unable to insert ' . $file, 2);
+            debug_event('song.class', 'Unable to insert ' . $file, 2);
 
             return false;
         }
@@ -428,13 +435,13 @@ class Song extends database_object implements media, library_item
             Useractivity::post_activity((int) ($user_upload), 'upload', 'song', $song_id);
         }
 
-        if (is_array($tags)) {
-            // Allow scripts to populate new tags when injecting user uploads
-            if (!defined('NO_SESSION')) {
-                if ($user_upload && !Access::check('interface', 50, $user_upload)) {
-                    $tags = Tag::clean_to_existing($tags);
-                }
+        // Allow scripts to populate new tags when injecting user uploads
+        if (!defined('NO_SESSION')) {
+            if ($user_upload && !Access::check('interface', 50, $user_upload)) {
+                $tags = Tag::clean_to_existing($tags);
             }
+        }
+        if (is_array($tags)) {
             foreach ($tags as $tag) {
                 $tag = trim($tag);
                 if (!empty($tag)) {
@@ -680,8 +687,8 @@ class Song extends database_object implements media, library_item
         }
         $db_results = Dba::read($sql);
 
-        while ($r = Dba::fetch_assoc($db_results)) {
-            $results[] = new Song($r['id']);
+        while ($row = Dba::fetch_assoc($db_results)) {
+            $results[] = new Song($row['id']);
         }
 
         return $results;
@@ -957,7 +964,7 @@ class Song extends database_object implements media, library_item
         } // end foreach
 
         if ($array['change']) {
-            debug_event('media-diff', json_encode($array['element']), 5);
+            debug_event('song.class', 'media-diff ' . json_encode($array['element']), 5);
         }
 
         return $array;
@@ -985,7 +992,7 @@ class Song extends database_object implements media, library_item
     public function update(array $data)
     {
         foreach ($data as $key => $value) {
-            debug_event('song.class.php', $key . '=' . $value, '5');
+            debug_event('song.class', $key . '=' . $value, 5);
 
             switch ($key) {
                 case 'artist_name':
@@ -1047,7 +1054,7 @@ class Song extends database_object implements media, library_item
             $meta    = array();
             $catalog = Catalog::create_from_id($this->catalog);
             if ($catalog->get_type() == 'local') {
-                debug_event('song', 'Writing id3 metadata to file ' . $this->file, 5);
+                debug_event('song.class', 'Writing id3 metadata to file ' . $this->file, 5);
                 if (self::isCustomMetadataEnabled()) {
                     foreach ($this->getMetadata() as $metadata) {
                         $meta[$metadata->getField()->getName()] = $metadata->getData();
@@ -1471,6 +1478,14 @@ class Song extends database_object implements media, library_item
 
         $this->f_publisher = $this->label;
         $this->f_composer  = $this->composer;
+
+        $year = $this->year;
+        if (!is_integer($year)) {
+            $year = 0;
+        } else {
+            $this->f_year_link = "<a href=\"" . AmpConfig::get('web_path') . "/artists.php?action=showyear&year=" . $year . "\">" . $year . "</a>";
+        }
+
         
         if (AmpConfig::get('licensing') && $this->license !== null) {
             $license = new License($this->license);
@@ -1527,12 +1542,14 @@ class Song extends database_object implements media, library_item
     }
 
     /**
-     * Search for item childrens.
+     * Search for item children.
      * @param string $name
      * @return array
      */
     public function search_childrens($name)
     {
+        debug_event('song.class', 'search_childrens ' . $name, 5);
+
         return array();
     }
 
@@ -1699,11 +1716,11 @@ class Song extends database_object implements media, library_item
      * @param string $object_type
      * @param integer $object_id
      * @param string $additional_params
-     * @param boolean $local
      * @param string $player
+     * @param boolean $local
      * @return string
      */
-    public static function generic_play_url($object_type, $object_id, $additional_params, $player=null, $local=false)
+    public static function generic_play_url($object_type, $object_id, $additional_params, $player='', $local=false)
     {
         $media = new $object_type($object_id);
         if (!$media->id) {
@@ -1720,7 +1737,7 @@ class Song extends database_object implements media, library_item
         if ($transcode_cfg == 'always' || ($transcode_cfg != 'never' && !in_array('native', $valid_types))) {
             $transcode_settings = $media->get_transcode_settings(null);
             if ($transcode_settings) {
-                debug_event("media", "Changing play url type from {" . $type . "} to {" . $transcode_settings['format'] . "} due to encoding settings...", 5);
+                debug_event('song.class', "Changing play url type from {" . $type . "} to {" . $transcode_settings['format'] . "} due to encoding settings...", 5);
                 $type = $transcode_settings['format'];
             }
         }
@@ -1731,7 +1748,7 @@ class Song extends database_object implements media, library_item
         $media_name = rawurlencode($media_name);
 
         $url = Stream::get_base_url($local) . "type=" . $object_type . "&oid=" . $object_id . "&uid=" . $uid . $additional_params;
-        if ($player) {
+        if ($player !== '') {
             $url .= "&player=" . $player;
         }
         $url .= "&name=" . $media_name;
@@ -1746,6 +1763,7 @@ class Song extends database_object implements media, library_item
      * else, this is the true function
      * @param integer $oid
      * @param string $additional_params
+     * @param string $player
      * @param boolean $local
      * @param string $player
      * @return string
@@ -1795,7 +1813,9 @@ class Song extends database_object implements media, library_item
             }
         }
         $sql .= "ORDER BY `date` DESC ";
-        $sql .= "LIMIT " . (string) (AmpConfig::get('popular_threshold')) . " ";
+        if (AmpConfig::get('popular_threshold')) {
+            $sql .= "LIMIT " . (string) (AmpConfig::get('popular_threshold')) . " ";
+        }
         $db_results = Dba::read($sql);
 
         $results = array();
@@ -1822,13 +1842,14 @@ class Song extends database_object implements media, library_item
     /**
      * Get stream types for media type.
      * @param string $type
+     * @param string $player
      * @return string
      */
-    public static function get_stream_types_for_type($type, $player = null)
+    public static function get_stream_types_for_type($type, $player = '')
     {
         $types     = array();
         $transcode = AmpConfig::get('transcode_' . $type);
-        if ($player) {
+        if ($player !== '') {
             $player_transcode = AmpConfig::get('transcode_player_' . $player . '_' . $type);
             if ($player_transcode) {
                 $transcode = $player_transcode;
@@ -1870,22 +1891,22 @@ class Song extends database_object implements media, library_item
             }
         }
 
-        if ($target) {
-            debug_event('media', 'Explicit format request {' . $target . '}', 5);
+        if ($target !== null && $target !== '') {
+            debug_event('song.class', 'Explicit format request {' . $target . '}', 5);
         } else {
             if ($target = AmpConfig::get('encode_target_' . $source)) {
-                debug_event('media', 'Defaulting to configured target format for ' . $source, 5);
+                debug_event('song.class', 'Defaulting to configured target format for ' . $source, 5);
             } else {
                 if ($target = AmpConfig::get($setting_target)) {
-                    debug_event('media', 'Using default target format', 5);
+                    debug_event('song.class', 'Using default target format', 5);
                 } else {
                     $target = $source;
-                    debug_event('media', 'No default target for ' . $source . ', choosing to resample', 5);
+                    debug_event('song.class', 'No default target for ' . $source . ', choosing to resample', 5);
                 }
             }
         }
 
-        debug_event('media', 'Transcode settings: from ' . $source . ' to ' . $target, 5);
+        debug_event('song.class', 'Transcode settings: from ' . $source . ' to ' . $target, 4);
 
         $cmd  = AmpConfig::get('transcode_cmd_' . $source) ?: AmpConfig::get('transcode_cmd');
         $args = '';
@@ -1899,19 +1920,19 @@ class Song extends database_object implements media, library_item
         $args .= ' ' . AmpConfig::get('transcode_input');
 
         if (AmpConfig::get('encode_srt') && $options['subtitle']) {
-            debug_event('media', 'Using subtitle ' . $options['subtitle'], 5);
+            debug_event('song.class', 'Using subtitle ' . $options['subtitle'], 5);
             $args .= ' ' . AmpConfig::get('encode_srt');
         }
 
         $argst = AmpConfig::get('encode_args_' . $target);
         if (!$args) {
-            debug_event('media', 'Target format ' . $target . ' is not properly configured', 2);
+            debug_event('song.class', 'Target format ' . $target . ' is not properly configured', 2);
 
             return false;
         }
         $args .= ' ' . $argst;
 
-        debug_event('media', 'Command: ' . $cmd . ' Arguments:' . $args, 5);
+        debug_event('song.class', 'Command: ' . $cmd . ' Arguments:' . $args, 5);
 
         return array('format' => $target, 'command' => $cmd . $args);
     }
@@ -1972,7 +1993,7 @@ class Song extends database_object implements media, library_item
             $run = str_replace("%A", $this->f_album, $run);
             $run = str_replace("%t", $this->f_title, $run);
 
-            debug_event('song', "Running custom play action: " . $run, 3);
+            debug_event('song.class', "Running custom play action: " . $run, 3);
 
             $descriptors = array(1 => array('pipe', 'w'));
             if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
@@ -2054,7 +2075,7 @@ class Song extends database_object implements media, library_item
         $meta['replaygain_album_gain'] = $this->replaygain_album_gain;
         $meta['replaygain_album_peak'] = $this->replaygain_album_peak;
         $meta['genre']                 = array();
-        if ($this->tags) {
+        if (!empty($this->tags)) {
             foreach ($this->tags as $tag) {
                 if (!in_array($tag['name'], $meta['genre'])) {
                     $meta['genre'][] = $tag['name'];
@@ -2107,7 +2128,7 @@ class Song extends database_object implements media, library_item
                 Useractivity::garbage_collection('song', $this->id);
             }
         } else {
-            debug_event('song', 'Cannot delete ' . $this->file . 'file. Please check permissions.', 1);
+            debug_event('song.class', 'Cannot delete ' . $this->file . 'file. Please check permissions.', 1);
         }
 
         return $deleted;

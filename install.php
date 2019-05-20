@@ -111,14 +111,12 @@ $web_path = $http_type . $_SERVER['HTTP_HOST'] . $safe_dirname;
 
 unset($safe_dirname);
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'create_db':
         $new_user = '';
         $new_pass = '';
-        if ($_POST['db_user'] == 'create_db_user') {
+        if (Core::get_post('db_user') == 'create_db_user') {
             $new_user = $_POST['db_username'];
             $new_pass = $_POST['db_password'];
 

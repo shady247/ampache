@@ -131,13 +131,15 @@ class Live_Stream extends database_object implements media, library_item
 
     public function search_childrens($name)
     {
+        debug_event('live_stream.class', 'search_childrens ' . $name, 5);
+
         return array();
     }
 
     public function get_medias($filter_type = null)
     {
         $medias = array();
-        if (!$filter_type || $filter_type == 'live_stream') {
+        if ($filter_type === null || $filter_type == 'live_stream') {
             $medias[] = array(
                 'object_type' => 'live_stream',
                 'object_id' => $this->id

@@ -29,10 +29,10 @@ if (!defined('AJAX_INCLUDE')) {
 }
 
 $results = array();
-$action  = UI::get_action();
+$action  = Core::get_request('action');
 
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'show_broadcasts':
         ob_start();
         require AmpConfig::get('prefix') . UI::find_template('show_broadcasts_dialog.inc.php');
@@ -42,7 +42,7 @@ switch ($action) {
 
         return false;
     case 'broadcast':
-        $broadcast_id = $_GET['broadcast_id'];
+        $broadcast_id = Core::get_get('broadcast_id');
         if (empty($broadcast_id)) {
             $broadcast_id = Broadcast::create(T_('My Broadcast'));
         }
@@ -56,7 +56,7 @@ switch ($action) {
         }
     break;
     case 'unbroadcast':
-        $broadcast_id = $_GET['broadcast_id'];
+        $broadcast_id = Core::get_get('broadcast_id');
         $broadcast    = new Broadcast($broadcast_id);
         if ($broadcast->id) {
             $broadcast->update_state(false);

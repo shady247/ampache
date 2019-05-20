@@ -59,7 +59,7 @@ class Core
                 require_once($path);
                 self::executeAutoCall($class);
             } else {
-                debug_event('autoload', "'$class' not found!", 1);
+                debug_event('core.class', "'$class' not found!", 1);
             }
         }
     }
@@ -85,9 +85,67 @@ class Core
      */
     public static function get_global($variable)
     {
-        debug_event('Core', "Requested GLOBAL " . $variable, 5);
-
         return $GLOBALS[$variable];
+    }
+
+    /**
+     * get_request
+     * Return a $REQUEST variable instead of calling directly
+     *
+     * @param string $variable
+     * @return string
+     */
+    public static function get_request($variable)
+    {
+        if (filter_input(INPUT_POST, $variable, FILTER_SANITIZE_STRING) !== null) {
+            return filter_input(INPUT_POST, $variable, FILTER_SANITIZE_STRING);
+        }
+        if (filter_input(INPUT_GET, $variable, FILTER_SANITIZE_STRING) !== null) {
+            return filter_input(INPUT_GET, $variable, FILTER_SANITIZE_STRING);
+        }
+        if ($_REQUEST[$variable] === null) {
+            return '';
+        }
+
+        return $_REQUEST[$variable];
+    }
+
+    /**
+     * get_get
+     * Return a $GET variable instead of calling directly
+     *
+     * @param string $variable
+     * @return string
+     */
+    public static function get_get($variable)
+    {
+        if (filter_has_var(INPUT_GET, $variable)) {
+            return filter_input(INPUT_GET, $variable, FILTER_SANITIZE_STRING);
+        }
+        if ($_GET[$variable] === null) {
+            return '';
+        }
+
+        return $_GET[$variable];
+    }
+
+    /**
+     * get_post
+     * Return a $POST variable instead of calling directly
+     *
+     * @param string $variable
+     * @return string
+     */
+    public static function get_post($variable)
+    {
+        if (filter_has_var(INPUT_POST, $variable)) {
+            return filter_input(INPUT_POST, $variable, FILTER_SANITIZE_STRING);
+        }
+        if ($_POST[$variable] === null) {
+            return '';
+        }
+
+        return $_POST[$variable];
     }
 
     /**
@@ -150,7 +208,7 @@ class Core
 
         // Register it
         $_SESSION['forms'][$sid] = array('name' => $name, 'expire' => $expire);
-        debug_event('Core', "Registered $type form $name with SID $sid and expiration $expire ($window seconds from now)", 5);
+        debug_event('core.class', "Registered $type form $name with SID $sid and expiration $expire ($window seconds from now)", 5);
 
         switch ($type) {
             case 'get':
@@ -176,23 +234,23 @@ class Core
     {
         switch ($type) {
             case 'post':
-                $sid = $_POST['form_validation'];
+                $sid = self::get_post('form_validation');
             break;
             case 'get':
-                $sid = $_GET['form_validation'];
+                $sid = self::get_get('form_validation');
             break;
             case 'cookie':
                 $sid = $_COOKIE['form_validation'];
             break;
             case 'request':
-                $sid = $_REQUEST['form_validation'];
+                $sid = self::get_request('form_validation');
             break;
             default:
                 return false;
         }
 
         if (!isset($_SESSION['forms'][$sid])) {
-            debug_event('Core', "Form $sid not found in session, rejecting request", 2);
+            debug_event('core.class', "Form $sid not found in session, rejecting request", 2);
 
             return false;
         }
@@ -201,9 +259,9 @@ class Core
         unset($_SESSION['forms'][$sid]);
 
         if ($form['name'] == $name) {
-            debug_event('Core', "Verified SID $sid for $type form $name", 5);
+            debug_event('core.class', "Verified SID $sid for $type form $name", 5);
             if ($form['expire'] < time()) {
-                debug_event('Core', "Form $sid is expired, rejecting request", 2);
+                debug_event('core.class', "Form $sid is expired, rejecting request", 2);
 
                 return false;
             }
@@ -212,7 +270,7 @@ class Core
         }
 
         // OMG HAX0RZ
-        debug_event('Core', "$type form $sid failed consistency check, rejecting request", 2);
+        debug_event('core.class', "$type form $sid failed consistency check, rejecting request", 2);
 
         return false;
     } // form_verify
@@ -257,7 +315,7 @@ class Core
         }
 
         if (empty($image_data)) {
-            debug_event('Core', "Cannot create image from empty data", 2);
+            debug_event('core.class', "Cannot create image from empty data", 2);
 
             return false;
         }
@@ -315,18 +373,18 @@ class Core
     {
         $size = filesize($filename);
         if ($size === false) {
-            $fp = fopen($filename, 'rb');
-            if (!$fp) {
+            $filepointer = fopen($filename, 'rb');
+            if (!$filepointer) {
                 return false;
             }
             $offset = PHP_INT_MAX - 1;
             $size   = (float) $offset;
-            if (!fseek($fp, $offset)) {
+            if (!fseek($filepointer, $offset)) {
                 return false;
             }
             $chunksize = 8192;
-            while (!feof($fp)) {
-                $size += strlen(fread($fp, $chunksize));
+            while (!feof($filepointer)) {
+                $size += strlen(fread($filepointer, $chunksize));
             }
         } elseif ($size < 0) {
             // Handle overflowed integer...

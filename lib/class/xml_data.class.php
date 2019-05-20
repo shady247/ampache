@@ -56,8 +56,7 @@ class XML_Data
      */
     public static function set_offset($offset)
     {
-        $offset       = (int) ($offset);
-        self::$offset = $offset;
+        self::$offset = (int) $offset;
     }
     // set_offset
 
@@ -113,9 +112,9 @@ class XML_Data
      */
     public static function error($code, $string)
     {
-        $string = "\t<error code=\"$code\"><![CDATA[$string]]></error>";
+        $xml_string = "\t<error code=\"$code\"><![CDATA[$string]]></error>";
 
-        return self::output_xml($string);
+        return self::output_xml($xml_string);
     }
     // error
 
@@ -224,6 +223,86 @@ class XML_Data
         return "";
     }
     // playlist_song_tracks_string
+
+    /**
+     * output_xml_from_array
+     * This takes a one dimensional array and creates a XML document from it. For
+     * use primarily by the ajax mojo.
+     */
+    public static function output_xml_from_array($array, $callback = false, $type = '')
+    {
+        $string = '';
+
+        // If we weren't passed an array then return
+        if (!is_array($array)) {
+            return $string;
+        }
+
+        // The type is used for the different XML docs we pass
+        switch ($type) {
+    case 'itunes':
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $value = xoutput_from_array($value, true, $type);
+                $string .= "\t\t<$key>\n$value\t\t</$key>\n";
+            } else {
+                if ($key == "key") {
+                    $string .= "\t\t<$key>$value</$key>\n";
+                } elseif (is_int($value)) {
+                    $string .= "\t\t\t<key>$key</key><integer>$value</integer>\n";
+                } elseif ($key == "Date Added") {
+                    $string .= "\t\t\t<key>$key</key><date>$value</date>\n";
+                } elseif (is_string($value)) {
+                    /* We need to escape the value */
+                    $string .= "\t\t\t<key>$key</key><string><![CDATA[$value]]></string>\n";
+                }
+            }
+        } // end foreach
+
+        return $string;
+    case 'xspf':
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $value = xoutput_from_array($value, true, $type);
+                $string .= "\t\t<$key>\n$value\t\t</$key>\n";
+            } else {
+                if ($key == "key") {
+                    $string .= "\t\t<$key>$value</$key>\n";
+                } elseif (is_numeric($value)) {
+                    $string .= "\t\t\t<$key>$value</$key>\n";
+                } elseif (is_string($value)) {
+                    /* We need to escape the value */
+                    $string .= "\t\t\t<$key><![CDATA[$value]]></$key>\n";
+                }
+            }
+        } // end foreach
+
+        return $string;
+    default:
+        foreach ($array as $key => $value) {
+            // No numeric keys
+            if (is_numeric($key)) {
+                $key = 'item';
+            }
+
+            if (is_array($value)) {
+                // Call ourself
+                $value = xoutput_from_array($value, true);
+                $string .= "\t<content div=\"$key\">$value</content>\n";
+            } else {
+                /* We need to escape the value */
+                $string .= "\t<content div=\"$key\"><![CDATA[$value]]></content>\n";
+            }
+            // end foreach elements
+        }
+        if (!$callback) {
+            $string = '<?xml version="1.0" encoding="utf-8" ?>' .
+                "\n<root>\n" . $string . "</root>\n";
+        }
+
+        return UI::clean_utf8($string);
+    }
+    } // output_from_array
 
     /**
      * keyed_array
@@ -338,7 +417,7 @@ class XML_Data
             $tag_string = self::tags_string($artist->tags);
 
             // Build the Art URL, include session
-            $art_url = AmpConfig::get('web_path') . '/image.php?object_id=' . $artist_id . '&object_type=artist&auth=' . scrub_out($_REQUEST['auth']);
+            $art_url = AmpConfig::get('web_path') . '/image.php?object_id=' . $artist_id . '&object_type=artist&auth=' . scrub_out(Core::get_request('auth'));
 
             // Handle includes
             if (in_array("albums", $include)) {
@@ -406,7 +485,7 @@ class XML_Data
             $rating = new Rating($album_id, 'album');
 
             // Build the Art URL, include session
-            $art_url = AmpConfig::get('web_path') . '/image.php?object_id=' . $album->id . '&object_type=album&auth=' . scrub_out($_REQUEST['auth']);
+            $art_url = AmpConfig::get('web_path') . '/image.php?object_id=' . $album->id . '&object_type=album&auth=' . scrub_out(Core::get_request('auth'));
 
             $string .= "<album id=\"" . $album->id . "\">\n" .
                     "\t<name><![CDATA[" . $album->name . "]]></name>\n";
@@ -465,16 +544,43 @@ class XML_Data
 
         // Foreach the playlist ids
         foreach ($playlists as $playlist_id) {
-            $playlist = new Playlist($playlist_id);
-            $playlist->format();
-            $item_total = $playlist->get_media_count('song');
+            /**
+             * Strip smart_ from playlist id and compare to original
+             * smartlist = 'smart_1'
+             * playlist  = 1000000
+             */
+            if (str_replace('smart_', '', (string) $playlist_id) === (string) $playlist_id) {
+                $playlist     = new Playlist($playlist_id);
+                $playlist_id  = $playlist->id;
+                $playlist->format();
 
+                $playlist_name  = $playlist->name;
+                $playlist_user  = $playlist->f_user;
+                $playitem_total = $playlist->get_media_count('song');
+                $playlist_type  = $playlist->type;
+            } else {
+                $playlist     = new Search(str_replace('smart_', '', (string) $playlist_id));
+                $playlist->format();
+
+                $playlist_name  = Search::get_name_byid(str_replace('smart_', '', (string) $playlist_id));
+                if ($playlist->type !== 'public') {
+                    $playlist_user  = $playlist->f_user;
+                } else {
+                    $playlist_user  = $playlist->type;
+                }
+                if ((int) $playlist->limit === 0 || (int) $playlist->limit > 5000) {
+                    $playitem_total = 5000;
+                } else {
+                    $playitem_total = $playlist->limit;
+                }
+                $playlist_type  = $playlist->type;
+            }
             // Build this element
-            $string .= "<playlist id=\"$playlist->id\">\n" .
-                    "\t<name><![CDATA[$playlist->name]]></name>\n" .
-                    "\t<owner><![CDATA[$playlist->f_user]]></owner>\n" .
-                    "\t<items>$item_total</items>\n" .
-                    "\t<type>$playlist->type</type>\n" .
+            $string .= "<playlist id=\"$playlist_id\">\n" .
+                    "\t<name><![CDATA[$playlist_name]]></name>\n" .
+                    "\t<owner><![CDATA[$playlist_user]]></owner>\n" .
+                    "\t<items>$playitem_total</items>\n" .
+                    "\t<type>$playlist_type</type>\n" .
                     "</playlist>\n";
         } // end foreach
 
@@ -501,7 +607,7 @@ class XML_Data
         }
 
         Song::build_cache($songs);
-        Stream::set_session($_REQUEST['auth']);
+        Stream::set_session(Core::get_request('auth'));
 
         // Foreach the ids!
         foreach ($songs as $song_id) {
@@ -516,7 +622,7 @@ class XML_Data
             $track_string = self::playlist_song_tracks_string($song, $playlist_data);
             $tag_string   = self::tags_string(Tag::get_top_tags('song', $song_id));
             $rating       = new Rating($song_id, 'song');
-            $art_url      = Art::url($song->album, 'album', $_REQUEST['auth']);
+            $art_url      = Art::url($song->album, 'album', Core::get_request('auth'));
 
             $string .= "<song id=\"" . $song->id . "\">\n" .
                     // Title is an alias for name
@@ -616,7 +722,7 @@ class XML_Data
 
             $rating = new Rating($song->id, 'song');
 
-            $art_url = Art::url($song->album, 'album', $_REQUEST['auth']);
+            $art_url = Art::url($song->album, 'album', Core::get_request('auth'));
 
             $string .= "<song id=\"" . $song->id . "\">\n" .
                     // Title is an alias for name
@@ -745,13 +851,12 @@ class XML_Data
      *
      * @param    array    $data    (description here...)
      * @param    string    $title    RSS feed title
-     * @param    string    $description    (The parameter is not used)
      * @param    string    $date    publish date
      * @return    string    RSS feed xml
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public static function rss_feed($data, $title, $description, $date = null)
+    public static function rss_feed($data, $title, $date = null)
     {
         $string = "\t<title>$title</title>\n\t<link>" . AmpConfig::get('web_path') . "</link>\n\t";
         if ($date !== null) {

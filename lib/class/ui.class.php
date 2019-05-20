@@ -146,7 +146,7 @@ class UI
                 return $clean;
             }
 
-            debug_event('UI', 'Charset cleanup failed, something might break', 1);
+            debug_event('ui.class', 'Charset cleanup failed, something might break', 1);
         }
     }
 
@@ -232,23 +232,6 @@ class UI
         }
 
         return $value;
-    }
-    
-    /**
-     * get_action
-     *
-     * Returns a string from INPUT_GET / INPUT_POST
-     * @return string $action
-     */
-    public static function get_action()
-    {
-        if ((string) filter_input(INPUT_GET, 'action')) {
-            $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
-        } else {
-            $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
-        }
-
-        return (string) $action;
     }
     
     /**
@@ -361,7 +344,7 @@ class UI
         }
 
         require_once AmpConfig::get('prefix') . self::find_template('footer.inc.php');
-        if (isset($_REQUEST['profiling'])) {
+        if (Core::get_request('profiling') !== '') {
             Dba::show_profile();
         }
     }
@@ -451,8 +434,8 @@ class UI
     {
         $isgv   = true;
         $name   = 'browse_' . $type . '_grid_view';
-        if ((filter_has_var(INPUT_COOKIE, $name))) {
-            $isgv = (filter_input(INPUT_COOKIE, $name, FILTER_SANITIZE_STRING) == 'true');
+        if (isset($_COOKIE[$name])) {
+            $isgv = ($_COOKIE[$name] == 'true');
         }
 
         return $isgv;

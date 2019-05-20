@@ -99,7 +99,7 @@ class Song_Preview extends database_object implements media, playable_item
         ));
 
         if (!$db_results) {
-            debug_event('song_preview', 'Unable to insert ' . $results[''], 2);
+            debug_event('song_preview.class', 'Unable to insert ' . $results[''], 2);
 
             return false;
         }
@@ -198,7 +198,7 @@ class Song_Preview extends database_object implements media, playable_item
     /**
      * format
      * This takes the current song object
-     * and does a ton of formating on it creating f_??? variables on the current
+     * and does a ton of formatting on it creating f_??? variables on the current
      * object
      */
     public function format($details = true)
@@ -246,13 +246,15 @@ class Song_Preview extends database_object implements media, playable_item
 
     public function search_childrens($name)
     {
+        debug_event('song_preview.class', 'search_childrens ' . $name, 5);
+
         return array();
     }
 
     public function get_medias($filter_type = null)
     {
         $medias = array();
-        if (!$filter_type || $filter_type == 'song_preview') {
+        if ($filter_type === null || $filter_type == 'song_preview') {
             $medias[] = array(
                 'object_type' => 'song_preview',
                 'object_id' => $this->id

@@ -24,10 +24,8 @@ require_once 'lib/init.php';
 
 UI::show_header();
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'delete':
         if (AmpConfig::get('demo_mode')) {
             break;
@@ -49,7 +47,7 @@ switch ($action) {
 
         $episode = new Podcast_Episode($_REQUEST['podcast_episode_id']);
         if (!Catalog::can_remove($episode)) {
-            debug_event('video', 'Unauthorized to remove the episode `.' . $episode->id . '`.', 1);
+            debug_event('podcast_episode', 'Unauthorized to remove the episode `.' . $episode->id . '`.', 1);
             UI::access_denied();
 
             return false;

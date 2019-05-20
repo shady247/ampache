@@ -78,14 +78,14 @@ class SubsonicClient
         );
     }
 
-    public function querySubsonic($action, $o=array(), $rawAnswer=false)
+    public function querySubsonic($action, $object=array(), $rawAnswer=false)
     {
-        return $this->_querySubsonic($action, $o, $rawAnswer);
+        return $this->_querySubsonic($action, $object, $rawAnswer);
     }
     
-    public function parameterize($url, $o = array())
+    public function parameterize($url, $object = array())
     {
-        $params = array_merge($this->_creds, $o);
+        $params = array_merge($this->_creds, $object);
 
         return $url . http_build_query($params);
     }
@@ -105,10 +105,10 @@ class SubsonicClient
                 CURLOPT_FOLLOWLOCATION => 1,
                 CURLOPT_PORT => (int) ($this->_serverPort)
             );
-            $ch = curl_init();
-            curl_setopt_array($ch, $options);
-            $answer = curl_exec($ch);
-            curl_close($ch);
+            $curl = curl_init();
+            curl_setopt_array($curl, $options);
+            $answer = curl_exec($curl);
+            curl_close($curl);
             if ($rawAnswer) {
                 return $answer;
             } else {

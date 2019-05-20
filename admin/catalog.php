@@ -31,8 +31,8 @@ if (!Access::check('interface', '100')) {
 
 UI::show_header();
 
-$catalogs = filter_input(INPUT_GET, 'catalogs', FILTER_SANITIZE_SPECIAL_CHARS);
-$action   = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
+$catalogs = $_REQUEST['catalogs'];
+$action   = Core::get_request('action');
 // If only one catalog, check it is ready.
 if (is_array($catalogs) && count($catalogs) == 1 && $action !== 'delete_catalog' && $action !== 'show_delete_catalog') {
     // If not ready, display the data to make it ready / stop the action.
@@ -49,10 +49,8 @@ if (is_array($catalogs) && count($catalogs) == 1 && $action !== 'delete_catalog'
     }
 }
 
-$action = UI::get_action();
-
 // Big switch statement to handle various actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'add_to_all_catalogs':
         catalog_worker('add_to_all_catalogs');
         show_confirmation(T_('Catalog Update started...'), '', AmpConfig::get('web_path') . '/admin/catalog.php', 0, 'confirmation', false);

@@ -30,10 +30,8 @@ if (!Access::check('interface', '100')) {
 
 UI::show_header();
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'delete_record':
         if (!Core::form_verify('delete_access')) {
             UI::access_denied();
@@ -48,7 +46,7 @@ switch ($action) {
         if (AmpConfig::get('demo_mode')) {
             break;
         }
-        $access = new Access($_GET['access_id']);
+        $access = new Access(Core::get_get('access_id'));
         show_confirmation(T_('Deletion Request'), T_('Are you sure you want to permanently delete') . ' ' . $access->name,
                 'admin/access.php?action=delete_record&amp;access_id=' . $access->id, 1, 'delete_access');
     break;
@@ -64,13 +62,13 @@ switch ($action) {
         Access::create($_POST);
 
         // Create Additional stuff based on the type
-        if ($_POST['addtype'] == 'stream' ||
-            $_POST['addtype'] == 'all'
+        if (Core::get_post('addtype') == 'stream' ||
+            Core::get_post('addtype') == 'all'
         ) {
             $_POST['type'] = 'stream';
             Access::create($_POST);
         }
-        if ($_POST['addtype'] == 'all') {
+        if (Core::get_post('addtype') == 'all') {
             $_POST['type'] = 'interface';
             Access::create($_POST);
         }
@@ -79,7 +77,7 @@ switch ($action) {
             $url = AmpConfig::get('web_path') . '/admin/access.php';
             show_confirmation(T_('Added'), T_('Your new Access Control List(s) have been created'), $url);
         } else {
-            $action = 'show_add_' . $_POST['type'];
+            $action = 'show_add_' . Core::get_post('type');
             require_once AmpConfig::get('prefix') . UI::find_template('show_add_access.inc.php');
         }
     break;
@@ -102,7 +100,7 @@ switch ($action) {
     case 'show_add_rpc':
     case 'show_add_local':
     case 'show_add_advanced':
-        $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
+        $action = Core::get_request('action');
         require_once AmpConfig::get('prefix') . UI::find_template('show_add_access.inc.php');
     break;
     case 'show_edit_record':

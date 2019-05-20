@@ -24,10 +24,8 @@ require_once 'lib/init.php';
 
 require_once AmpConfig::get('prefix') . UI::find_template('header.inc.php');
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'delete':
         if (AmpConfig::get('demo_mode')) {
             break;
@@ -49,7 +47,7 @@ switch ($action) {
 
         $album = new Album($_REQUEST['album_id']);
         if (!Catalog::can_remove($album)) {
-            debug_event('album', 'Unauthorized to remove the album `.' . $album->id . '`.', 1);
+            debug_event('albums', 'Unauthorized to remove the album `.' . $album->id . '`.', 2);
             UI::access_denied();
 
             return false;
@@ -68,14 +66,16 @@ switch ($action) {
 
             return false;
         }
-
+        $album = new Album($_REQUEST['album_id']);
+        $album->format();
+        $catalog_id    = $album->get_catalogs();
         $type          = 'album';
         $object_id     = (int) filter_input(INPUT_GET, 'album_id', FILTER_SANITIZE_NUMBER_INT);
         $target_url    = AmpConfig::get('web_path') . '/albums.php?action=show&amp;album=' . $object_id;
         require_once AmpConfig::get('prefix') . UI::find_template('show_update_items.inc.php');
     break;
     case 'set_track_numbers':
-        debug_event('albums', 'Set track numbers called.', '5');
+        debug_event('albums', 'Set track numbers called.', 5);
 
         if (!Access::check('interface', '75')) {
             UI::access_denied();
@@ -85,12 +85,12 @@ switch ($action) {
 
         // Retrieving final song order from url
         foreach ($_GET as $key => $data) {
-            $_GET[$key] = unhtmlentities(scrub_in($data));
-            debug_event('albums', $key . '=' . $_GET[$key], '5');
+            $_GET[$key] = unhtmlentities((string) scrub_in($data));
+            debug_event('albums', $key . '=' . Core::get_get($key), 5);
         }
 
         if (isset($_GET['order'])) {
-            $songs = explode(";", $_GET['order']);
+            $songs = explode(";", Core::get_get('order'));
             $track = filter_input(INPUT_GET, 'offset', FILTER_SANITIZE_NUMBER_INT) ? ((filter_input(INPUT_GET, 'offset', FILTER_SANITIZE_NUMBER_INT)) + 1) : 1;
             foreach ($songs as $song_id) {
                 if ($song_id != '') {

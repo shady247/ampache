@@ -21,7 +21,7 @@
  */
 ?>
 <?php UI::show_box_top(T_('Play Random Selection'), 'box box_random'); ?>
-<form id="random" method="post" enctype="multipart/form-data" action="<?php echo AmpConfig::get('web_path'); ?>/random.php?action=get_advanced&type=<?php echo $_REQUEST['type'] ? scrub_out($_REQUEST['type']) : 'song'; ?>">
+<form id="random" method="post" enctype="multipart/form-data" action="<?php echo AmpConfig::get('web_path'); ?>/random.php?action=get_advanced&type=<?php echo Core::get_request('type') ? scrub_out(Core::get_request('type')) : 'song'; ?>">
 <table class="tabledata" cellpadding="3" cellspacing="0">
 <tr id="search_location">
     <td><?php if ((string) filter_input(INPUT_GET, 'type', FILTER_SANITIZE_SPECIAL_CHARS) !== 'song') {
@@ -64,7 +64,7 @@
 <tr id="search_length">
         <td><?php echo T_('Length'); ?></td>
         <td>
-                <?php $name = 'length_' . (int) ($_POST['length']); ${$name} = ' selected="selected"'; ?>
+                <?php $name = 'length_' . (int) (Core::get_post('length')); ${$name} = ' selected="selected"'; ?>
                 <select name="length">
 <?php
             echo "\t\t\t" . '<option value="0" ' .

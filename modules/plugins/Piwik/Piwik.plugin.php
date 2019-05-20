@@ -90,7 +90,7 @@ class AmpachePiwik
      */
     public function display_on_footer()
     {
-        $currentUrl = scrub_out("http" . (filter_has_var(INPUT_SERVER, 'HTTPS') ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+        $currentUrl = scrub_out("http" . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
 
         echo "<!-- Piwik -->\n";
         echo "<script type='text/javascript'>\n";
@@ -125,14 +125,14 @@ class AmpachePiwik
 
         $this->site_id = trim($data['piwik_site_id']);
         if (!strlen($this->site_id)) {
-            debug_event($this->name, 'No Piwik Site ID, user field plugin skipped', '3');
+            debug_event('piwik.plugin', 'No Piwik Site ID, user field plugin skipped', 3);
 
             return false;
         }
 
         $this->piwik_url = trim($data['piwik_url']);
         if (!strlen($this->piwik_url)) {
-            debug_event($this->name, 'No Piwik URL, user field plugin skipped', '3');
+            debug_event('piwik.plugin', 'No Piwik URL, user field plugin skipped', 3);
 
             return false;
         }

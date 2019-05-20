@@ -24,10 +24,8 @@ require_once 'lib/init.php';
 
 UI::show_header();
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'delete':
         if (AmpConfig::get('demo_mode')) {
             break;
@@ -49,7 +47,7 @@ switch ($action) {
 
         $tvshow_season = new TVShow_Season($_REQUEST['tvshow_season_id']);
         if (!Catalog::can_remove($tvshow_season)) {
-            debug_event('tvshow_season', 'Unauthorized to remove the tvshow `.' . $tvshow_season->id . '`.', 1);
+            debug_event('tvshow_seasons', 'Unauthorized to remove the tvshow `.' . $tvshow_season->id . '`.', 1);
             UI::access_denied();
 
             return false;

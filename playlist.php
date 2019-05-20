@@ -24,7 +24,7 @@
 
 require_once 'lib/init.php';
 // We special-case this so we can send a 302 if the delete succeeded
-if (filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS) == 'delete_playlist') {
+if (Core::get_request('action') == 'delete_playlist') {
     // Check rights
     $playlist = new Playlist($_REQUEST['playlist_id']);
     if ($playlist->has_access()) {
@@ -38,10 +38,8 @@ if (filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS) == 'delete_
 
 UI::show_header();
 
-$action = UI::get_action();
-
 // Switch on the actions
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'create_playlist':
         /* Check rights */
         if (!Access::check('interface', 25)) {
@@ -92,7 +90,7 @@ switch ($action) {
         show_confirmation($title, $body, AmpConfig::get('web_path') . '/playlist.php?action=' . $url);
     break;
     case 'set_track_numbers':
-        debug_event('playlist', 'Set track numbers called.', '5');
+        debug_event('playlist', 'Set track numbers called.', 5);
 
         $playlist = new Playlist($_REQUEST['playlist_id']);
         /* Make sure they have permission */
@@ -103,8 +101,8 @@ switch ($action) {
 
         // Retrieving final song order from url
         foreach ($_GET as $key => $data) {
-            $_GET[$key] = unhtmlentities(scrub_in($data));
-            debug_event('playlist', $key . '=' . $_GET[$key], '5');
+            $_GET[$key] = unhtmlentities((string) scrub_in($data));
+            debug_event('playlist', $key . '=' . $_GET[$key], 5);
         }
 
         if (isset($_GET['order'])) {
@@ -140,7 +138,7 @@ switch ($action) {
         show_confirmation($title, $body, $url);
     break;
     case 'remove_duplicates':
-        debug_event('playlist', 'Remove duplicates called.', '5');
+        debug_event('playlist', 'Remove duplicates called.', 5);
 
         $playlist = new Playlist($_REQUEST['playlist_id']);
         /* Make sure they have permission */

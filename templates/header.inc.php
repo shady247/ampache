@@ -52,7 +52,7 @@ $_SESSION['login'] = false;
         ?>
         <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=<?php echo AmpConfig::get('site_charset'); ?>" />
         <meta name="viewport" content="width=1024, initial-scale=1.0">
-        <title><?php print_r(AmpConfig::get('site_title')); ?> - <?php print_r($location['title']); ?></title>
+        <title><?php echo AmpConfig::get('site_title'); ?> - <?php echo $location['title']; ?></title>
 
         <?php require_once AmpConfig::get('prefix') . UI::find_template('stylesheets.inc.php'); ?>
 
@@ -296,7 +296,7 @@ $_SESSION['login'] = false;
         </script>
 
         <?php
-            if (AmpConfig::get('cookie_disclaimer') && !(filter_has_var(INPUT_COOKIE, 'cookie_disclaimer'))) {
+            if (AmpConfig::get('cookie_disclaimer') && !isset($_COOKIE['cookie_disclaimer'])) {
                 ?>
 
         <script type="text/javascript" language="javascript">
@@ -506,7 +506,7 @@ $_SESSION['login'] = false;
             });
             </script>
 
-            <div id="rightbar" class="rightbar-<?php echo AmpConfig::get('ui_fixed') ? 'fixed' : 'float'; ?> <?php echo $count_temp_playlist ? '' : 'hidden' ?>">
+            <div id="rightbar" class="rightbar-fixed">
                 <?php require_once AmpConfig::get('prefix') . UI::find_template('rightbar.inc.php'); ?>
             </div>
 

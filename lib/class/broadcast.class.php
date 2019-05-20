@@ -233,6 +233,8 @@ class Broadcast extends database_object implements library_item
      */
     public function search_childrens($name)
     {
+        debug_event('broadcast.class', 'search_childrens ' . $name, 5);
+
         return array();
     }
 
@@ -245,7 +247,7 @@ class Broadcast extends database_object implements library_item
     {
         // Not a media, shouldn't be that
         $medias = array();
-        if (!$filter_type || $filter_type == 'broadcast') {
+        if ($filter_type === null || $filter_type == 'broadcast') {
             $medias[] = array(
                 'object_type' => 'broadcast',
                 'object_id' => $this->id

@@ -23,11 +23,7 @@
 $prefix = dirname(__FILE__);
 require_once $prefix . '/lib/init-tiny.php';
 
-$action = 'default';
-if (filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS)) {
-    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
-}
-switch ($action) {
+switch ($_REQUEST['action']) {
     case 'config':
         // Check to see if the config file is working now, if so fall
         // through to the default, else show the appropriate template
@@ -58,7 +54,7 @@ switch ($action) {
 
         // Try to load localization from cookie
         $session_name = AmpConfig::get('session_name');
-        if ((filter_has_var(INPUT_COOKIE, $session_name . '_lang'))) {
+        if (isset($_COOKIE[$session_name . '_lang'])) {
             AmpConfig::set('lang', $_COOKIE[$session_name . '_lang']);
         }
 
